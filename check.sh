@@ -8,7 +8,7 @@ else
 	file="foo.mhs"
 	if ! test -e $file
 	then
-		echo "Usage: $0 <program>" >&2
+		echo "Usage: $0 \"<program>\"" >&2
 		exit 1
 	fi
 fi

@@ -17,7 +17,11 @@ let Right e = parseProgram "<input>" program
 infer e
 ```
 
-* Specify a MinHS program as a string and run `./check.sh`
+* Specify a MinHS program as a string:
+
+```
+./check.sh "<program>"
+```
 
 Copyright (C) 2016 Constantinos Paraskevopoulos
 

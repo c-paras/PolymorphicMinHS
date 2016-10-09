@@ -100,11 +100,13 @@ unquantify' i s (Forall x t) = do x' <- fresh
 
 -- computes the most general unifier of two types
 unify :: Type -> Type -> TC Subst
+-- TODO
 unify = error "to be implemented"
 
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
 generalise g t = Ty t
+-- TODO
 -- generalise g _ = error "to be implemented"
 
 -- inferExp infers the type of the expression in the binding
@@ -142,16 +144,19 @@ inferExp g e@(Con c) =
   case (constType c) of
     Just t ->
       do
-      t' <- unquantify t
-      return (e, t', emptySubst)
+        t' <- unquantify t -- replaces foralls with fresh type variables
+        return (e, t', emptySubst)
+    _ -> error $ "unknown constructor " ++ (show c)
 
 -- infers the type of primops
 -- c :: tau with forall replaced with fresh type variables
 -- subst: empty
 inferExp g e@(App (App (Prim o) x) y) =
   do
-    t <- unquantify $ primOpType o
-    return (e, t, emptySubst)
+-- TODO
+--    t <- unquantify $ primOpType o -- replaces foralls with fresh type variablesz
+    return (e, Base Int, emptySubst)
+
 
 inferExp g e = error $ show e
 -- Note: this is the only case you need to handle for case expressions
