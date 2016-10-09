@@ -1,3 +1,9 @@
+{-
+Contributors: Liam O'Connor-Davis and Constantinos Paraskevopoulos
+Last Updated: October 2016
+Description: Implements a type inference pass for the Haskell subset MinHS.
+-}
+
 module MinHS.TyInfer where
 
 import qualified MinHS.Env as E
@@ -49,12 +55,12 @@ initialGamma = E.empty
 
 tv :: Type -> [Id]
 tv = tv'
- where
-   tv' (TypeVar x) = [x]
-   tv' (Prod  a b) = tv a `union` tv b
-   tv' (Sum   a b) = tv a `union` tv b
-   tv' (Arrow a b) = tv a `union` tv b
-   tv' (Base c   ) = []
+  where
+    tv' (TypeVar x) = [x]
+    tv' (Prod  a b) = tv a `union` tv b
+    tv' (Sum   a b) = tv a `union` tv b
+    tv' (Arrow a b) = tv a `union` tv b
+    tv' (Base c   ) = []
 
 tvQ :: QType -> [Id]
 tvQ (Forall x t) = filter (/= x) $ tvQ t
@@ -64,8 +70,10 @@ tvGamma :: Gamma -> [Id]
 tvGamma = nub . foldMap tvQ
 
 infer :: Program -> Either TypeError Program
-infer program = do (p',tau, s) <- runTC $ inferProgram initialGamma program
-                   return p'
+infer program =
+  do
+    (p', tau, s) <- runTC $ inferProgram initialGamma program
+    return p'
 
 unquantify :: QType -> TC Type
 {-
@@ -80,7 +88,6 @@ we avoid capture entirely by first replacing each bound
 variable with a guaranteed non-colliding variable with a numeric name,
 and then substituting those numeric names for our normal fresh variables
 -}
-
 unquantify = unquantify' 0 emptySubst
 unquantify' :: Int -> Subst -> QType -> TC Type
 unquantify' i s (Ty t) = return $ substitute s t
@@ -89,20 +96,33 @@ unquantify' i s (Forall x t) = do x' <- fresh
                                               ((show i =: x') <> s)
                                               (substQType (x =:TypeVar (show i)) t)
 
+-- computes the most general unifier of two types
 unify :: Type -> Type -> TC Subst
-unify = error "implement me"
+unify = error "to be implemented"
 
+-- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
-generalise g t = error "implement me"
+generalise g t = Ty t
+generalise g _ = error "to be implemented"
 
+-- inferExp infers the type of the expression in the binding
+-- allTypes runs the resulting substitution on the entire expression
 inferProgram :: Gamma -> Program -> TC (Program, Type, Subst)
-inferProgram env bs = error "implement me! don't forget to run the result substitution on the"
-                            "entire expression using allTypes from Syntax.hs"
+inferProgram g [Bind id Nothing [] exp] =
+  do
+    (exp', t, subst) <- inferExp g exp
+    return (([Bind id (Just (generalise g t)) [] (allTypes (substQType subst) exp')]), t, subst)
 
+-- infers the type of an expression under an environment
+-- returns the expression, its type and a substitution
 inferExp :: Gamma -> Exp -> TC (Exp, Type, Subst)
-inferExp g _ = error "Implement me!"
--- -- Note: this is the only case you need to handle for case expressions
+
+-- Num n :: Int
+-- subst: empty
+inferExp g (Num n) = return (Num n, Base Int, emptySubst)
+
+inferExp g e = error $ show e
+inferExp g _ = error "to be implemented"
+-- Note: this is the only case you need to handle for case expressions
 -- inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2])
 -- inferExp g (Case e _) = typeError MalformedAlternatives
-
-
