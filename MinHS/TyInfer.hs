@@ -15,18 +15,26 @@ import Data.Monoid (Monoid (..), (<>))
 import Data.Foldable (foldMap)
 import Data.List (nub, union, (\\))
 
+-- returns the type of a given primop
 primOpType :: Op -> QType
-primOpType Gt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Ge   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Lt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Le   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Eq   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Ne   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Neg  = Ty $ Base Int `Arrow` Base Int
-primOpType Fst  = Forall "a" $ Forall "b" $ Ty $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "a"
-primOpType Snd  = Forall "a" $ Forall "b" $ Ty $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "b"
-primOpType _    = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Int)
+primOpType Gt   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Ge   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Lt   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Le   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Eq   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Ne   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Neg  = Ty $ Base Int  --Base Int `Arrow` Base Int
+primOpType Fst  = Forall "a"
+                $ Forall "b"
+                $ Ty
+                $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "a"
+primOpType Snd  = Forall "a"
+                $ Forall "b"
+                $ Ty
+                $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "b"
+primOpType _    = Ty $ Base Int  --Base Int `Arrow` (Base Int `Arrow` Base Int)
 
+-- returns the type of a constructor
 constType :: Id -> Maybe QType
 constType "True"  = Just $ Ty $ Base Bool
 constType "False" = Just $ Ty $ Base Bool
@@ -148,14 +156,19 @@ inferExp g e@(Con c) =
         return (e, t', emptySubst)
     _ -> error $ "unknown constructor " ++ (show c)
 
+-- infers the type of the unary negation operator
+-- c :: Int
+-- subst: empty
+inferExp g e@(App (Prim Neg) x) = return (e, Base Int, emptySubst)
+
 -- infers the type of primops
 -- c :: tau with forall replaced with fresh type variables
 -- subst: empty
 inferExp g e@(App (App (Prim o) x) y) =
   do
 -- TODO
---    t <- unquantify $ primOpType o -- replaces foralls with fresh type variablesz
-    return (e, Base Int, emptySubst)
+    t <- unquantify $ primOpType o -- replaces foralls with fresh type variables
+    return (e, t, emptySubst)
 
 
 inferExp g e = error $ show e
