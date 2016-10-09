@@ -14,5 +14,7 @@ else
 fi
 
 ./dist/build/minhs-2/minhs-2 --dump parser-raw $file
+echo
 ./dist/build/minhs-2/minhs-2 --dump parser $file
+echo
 ./dist/build/minhs-2/minhs-2 --dump type-infer $file
