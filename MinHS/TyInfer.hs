@@ -171,14 +171,15 @@ inferExp g e@(App (App (Prim o) x) y) =
     t <- unquantify $ primOpType o -- replaces foralls with fresh type variables
     return (e, t, emptySubst)
 
--- infers the type of function application
+-- infers the type of function applications
 -- ::
 -- subst:
 
 -- infers the type of if statements
 -- ::
 -- subst:
-inferExp g e@() = 
+inferExp g e@(If e0 e1 e2) =
+  error $ show e1
 
 -- infers the type of case expressions
 -- ::

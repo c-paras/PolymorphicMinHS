@@ -1,5 +1,8 @@
 #!/bin/sh
 
+cabal build > /dev/null || exit 1
+echo
+
 if test -n "$1"
 then
 	file="/tmp/foo_$$.mhs"
