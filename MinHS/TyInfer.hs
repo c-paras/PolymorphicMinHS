@@ -105,7 +105,7 @@ unify = error "to be implemented"
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
 generalise g t = Ty t
-generalise g _ = error "to be implemented"
+-- generalise g _ = error "to be implemented"
 
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
@@ -133,10 +133,27 @@ inferExp g e@(Var x) =
       do
         t' <- unquantify t -- replaces foralls with fresh type variables
         return (e, t', emptySubst)
-    _      -> error $ "undefined variable " ++ (show x)
+    _ -> error $ "undefined variable " ++ (show x)
+
+-- infers the type of constructors
+-- c :: tau with forall replaced with fresh type variables
+-- subst: empty
+inferExp g e@(Con c) =
+  case (constType c) of
+    Just t ->
+      do
+      t' <- unquantify t
+      return (e, t', emptySubst)
+
+-- infers the type of primops
+-- c :: tau with forall replaced with fresh type variables
+-- subst: empty
+--inferExp g e@(n Gt m) =
+--  do
+--    t' <- unquantify primOpType Gt
+--    return (e, t', emptySubst)
 
 inferExp g e = error $ show e
-inferExp g _ = error "to be implemented"
 -- Note: this is the only case you need to handle for case expressions
 -- inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2])
 -- inferExp g (Case e _) = typeError MalformedAlternatives
