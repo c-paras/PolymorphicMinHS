@@ -109,12 +109,29 @@ unquantify' i s (Forall x t) =
 
 -- computes the most general unifier of two types
 unify :: Type -> Type -> TC Subst
--- TODO
-unify v1 v2 | v1 == v2  = return emptySubst
+
+-- unifies type variables
+unify v1 v2 | v1 == v2 = return emptySubst
+unify v1 v2 | v1 /= v2 = return ("a" =: v2) -- TODO
+
+-- unifies primitive types
 unify (Base a) (Base b) =
   if a == b
   then return emptySubst
-  else error "no unifier"
+  else error "primitive types differ"
+
+-- unifies product types
+-- TODO
+-- unifies function types
+-- TODO
+-- unifies sum types
+-- TODO
+-- unifies a type variable with an arbitrary term
+-- TODO
+-- terminates in error for all other combinations
+-- TODO
+
+unify _ _ = error "no unifier"
 
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
@@ -211,4 +228,5 @@ inferExp g exp@(If e e1 e2) =
 --infers the type of let bindings
 -- ::
 
+-- terminates in error for all other expressions
 inferExp _ e = error $ "runtime error: " ++ (show e)
