@@ -148,10 +148,10 @@ inferExp g e@(Con c) =
 -- infers the type of primops
 -- c :: tau with forall replaced with fresh type variables
 -- subst: empty
---inferExp g e@(n Gt m) =
---  do
---    t' <- unquantify primOpType Gt
---    return (e, t', emptySubst)
+inferExp g e@(App (App (Prim o) x) y) =
+  do
+    t <- unquantify $ primOpType o
+    return (e, t, emptySubst)
 
 inferExp g e = error $ show e
 -- Note: this is the only case you need to handle for case expressions
