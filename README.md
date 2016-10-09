@@ -1,4 +1,4 @@
-# PolymorphicMinHS
+# Polymorphic MinHS
 Type inference for the polymorphic MinHS programming language, a subset of Haskell
 
 This implementation has been tested on Ubuntu 64-bit 16.04 LTS using GHC version 7.10.3. Convenient testing can be done in one of three ways:
@@ -12,7 +12,7 @@ reset && cabal build && ./run_tests.sh
 * Test a standalone program in `ghci`:
 
 ```haskell
-let program = "main = 0;"
+let program = "main = 1 + 2;"
 let Right e = parseProgram "<input>" program
 infer e
 ```
