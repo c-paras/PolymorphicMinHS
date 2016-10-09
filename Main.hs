@@ -5,6 +5,7 @@ import MinHS.Pretty
 import MinHS.Evaluator
 import Control.Monad
 import Data.Either
+import Data.Monoid
 
 import Options.Applicative
 import Options.Applicative.Types

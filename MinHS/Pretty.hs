@@ -2,7 +2,7 @@
 module MinHS.Pretty where
 import MinHS.Syntax
 import MinHS.TCMonad
-
+import Prelude hiding ((<$>))
 import Text.PrettyPrint.ANSI.Leijen
 
 primop = dullyellow . string
