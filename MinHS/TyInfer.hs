@@ -101,10 +101,11 @@ and then substituting those numeric names for our normal fresh variables
 unquantify = unquantify' 0 emptySubst
 unquantify' :: Int -> Subst -> QType -> TC Type
 unquantify' i s (Ty t) = return $ substitute s t
-unquantify' i s (Forall x t) = do x' <- fresh
-                                  unquantify' (i + 1)
-                                              ((show i =: x') <> s)
-                                              (substQType (x =:TypeVar (show i)) t)
+unquantify' i s (Forall x t) =
+  do x' <- fresh
+     unquantify' (i + 1)
+                 ((show i =: x') <> s)
+                 (substQType (x =:TypeVar (show i)) t)
 
 -- computes the most general unifier of two types
 unify :: Type -> Type -> TC Subst
@@ -146,7 +147,7 @@ inferExp g e@(Var x) =
     _ -> error $ "undefined variable " ++ (show x)
 
 -- infers the type of constructors
--- c :: tau with forall replaced with fresh type variables
+-- Con c :: tau with forall replaced with fresh type variables
 -- subst: empty
 inferExp g e@(Con c) =
   case (constType c) of
@@ -157,12 +158,12 @@ inferExp g e@(Con c) =
     _ -> error $ "unknown constructor " ++ (show c)
 
 -- infers the type of the unary negation operator
--- c :: Int
+-- Neg x :: Int
 -- subst: empty
 inferExp g e@(App (Prim Neg) x) = return (e, Base Int, emptySubst)
 
 -- infers the type of primops
--- c :: tau with forall replaced with fresh type variables
+-- Prim o x y :: tau with forall replaced with fresh type variables
 -- subst: empty
 inferExp g e@(App (App (Prim o) x) y) =
   do
@@ -170,8 +171,28 @@ inferExp g e@(App (App (Prim o) x) y) =
     t <- unquantify $ primOpType o -- replaces foralls with fresh type variables
     return (e, t, emptySubst)
 
+-- infers the type of function application
+-- ::
+-- subst:
 
-inferExp g e = error $ show e
--- Note: this is the only case you need to handle for case expressions
--- inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2])
--- inferExp g (Case e _) = typeError MalformedAlternatives
+-- infers the type of if statements
+-- ::
+-- subst:
+inferExp g e@() = 
+
+-- infers the type of case expressions
+-- ::
+-- subst:
+--inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) = error ""
+--inferExp g (Case e _) = typeError MalformedAlternatives
+
+--infers the type of recursive functions
+-- ::
+-- subst:
+
+--infers the type of let bindings
+-- ::
+-- subst:
+
+--
+inferExp _ e = error $ "runtime error: " ++ (show e)
