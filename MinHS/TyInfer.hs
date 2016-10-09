@@ -111,8 +111,8 @@ unquantify' i s (Forall x t) =
 unify :: Type -> Type -> TC Subst
 
 -- unifies type variables
-unify v1 v2 | v1 == v2 = return emptySubst
-unify v1 v2 | v1 /= v2 = return ("a" =: v2) -- TODO
+unify (TypeVar v1) (TypeVar v2) | v1 == v2 = return emptySubst
+unify (TypeVar v1) (TypeVar v2) | v1 /= v2 = return (v2 =: TypeVar v1)
 
 -- unifies primitive types
 unify (Base a) (Base b) =
@@ -128,9 +128,8 @@ unify (Base a) (Base b) =
 -- TODO
 -- unifies a type variable with an arbitrary term
 -- TODO
--- terminates in error for all other combinations
--- TODO
 
+-- terminates in error for all other combinations
 unify _ _ = error "no unifier"
 
 -- reintroduces forall quantifiers
