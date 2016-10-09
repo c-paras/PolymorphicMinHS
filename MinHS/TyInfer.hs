@@ -110,13 +110,16 @@ unquantify' i s (Forall x t) =
 -- computes the most general unifier of two types
 unify :: Type -> Type -> TC Subst
 -- TODO
-unify = error "to be implemented"
+unify v1 v2 | v1 == v2  = return emptySubst
+unify (Base a) (Base b) =
+  if a == b
+  then return emptySubst
+  else error "no unifier"
 
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
 generalise g t = Ty t
 -- TODO
--- generalise g _ = error "to be implemented"
 
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
@@ -131,13 +134,11 @@ inferProgram g [Bind id Nothing [] exp] =
 inferExp :: Gamma -> Exp -> TC (Exp, Type, Subst)
 
 -- infers the type of numeric constants
--- Num n :: Int
--- subst: empty
+-- Num n :: Int; empty subst
 inferExp g e@(Num n) = return (e, Base Int, emptySubst)
 
 -- infers the type of variables
--- Var x :: tau with foralls replaced with fresh type variables
--- subst: empty
+-- Var x :: tau with foralls replaced with fresh type variables; empty subst
 inferExp g e@(Var x) =
   case (E.lookup g x) of
     Just t ->
@@ -147,8 +148,7 @@ inferExp g e@(Var x) =
     _ -> error $ "undefined variable " ++ (show x)
 
 -- infers the type of constructors
--- Con c :: tau with forall replaced with fresh type variables
--- subst: empty
+-- Con c :: tau with forall replaced with fresh type variables; empty subst
 inferExp g e@(Con c) =
   case (constType c) of
     Just t ->
@@ -158,42 +158,57 @@ inferExp g e@(Con c) =
     _ -> error $ "unknown constructor " ++ (show c)
 
 -- infers the type of the unary negation operator
--- Neg x :: Int
--- subst: empty
+-- Neg x :: Int; empty subst
 inferExp g e@(App (Prim Neg) x) = return (e, Base Int, emptySubst)
 
 -- infers the type of primops
--- Prim o x y :: tau with forall replaced with fresh type variables
--- subst: empty
+-- Prim o x y :: tau with forall replaced with fresh type variables; empty subst
 inferExp g e@(App (App (Prim o) x) y) =
   do
--- TODO
+-- TODO: fix primOpType if needed
     t <- unquantify $ primOpType o -- replaces foralls with fresh type variables
     return (e, t, emptySubst)
 
 -- infers the type of function applications
 -- ::
--- subst:
 
 -- infers the type of if statements
--- ::
--- subst:
-inferExp g e@(If e0 e1 e2) =
-  error $ show e1
+-- If e e1 e2 :: mgu applied to the else branch
+inferExp g exp@(If e e1 e2) =
+  do
+    (e', tau, t)    <- inferExp g e
+    u               <- unify tau (Base Bool)
+    (e1', tau1, t1) <- inferExp (substGamma u (substGamma t g)) e1
+    (e2', tau2, t2) <- inferExp (substGamma t1 (substGamma u (substGamma t g))) e2
+    u' <- unify (substitute t2 tau1) tau2
+    -- TODO: return the correct substitution
+    return (exp, substitute u' tau2, emptySubst) ---(substGamma u' (substGamma t2 (substGamma t1 (substGamma u (substGamma t g))))))
+
+{-
+inferExp g exp@(If e e1 e2) =
+  do
+    (e', tau, t)    <- inferExp g e
+    u                = unify tau (Base Bool)
+    g'               = substGamma t g
+    g''              = substGamma u g'
+    (e1', tau1, t1) <- inferExp g'' e1
+    g'''             = substGamma t1 g''
+    (e2', tau2, t2) <- inferExp g''' e2
+    u'               = unify (substitute t2 tau1) tau2
+    g''''            = substGamma t2 g'''
+    g'''''           = substGamma u' g''''
+    return (exp, substitute u' tau2, g''''')
+-}
 
 -- infers the type of case expressions
 -- ::
--- subst:
 --inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) = error ""
 --inferExp g (Case e _) = typeError MalformedAlternatives
 
 --infers the type of recursive functions
 -- ::
--- subst:
 
 --infers the type of let bindings
 -- ::
--- subst:
 
---
 inferExp _ e = error $ "runtime error: " ++ (show e)
