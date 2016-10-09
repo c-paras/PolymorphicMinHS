@@ -69,12 +69,14 @@ tvQ (Ty t) = tv t
 tvGamma :: Gamma -> [Id]
 tvGamma = nub . foldMap tvQ
 
+-- implements the type inference pass for the MinHS program
 infer :: Program -> Either TypeError Program
 infer program =
   do
     (p', tau, s) <- runTC $ inferProgram initialGamma program
     return p'
 
+-- replaces forall quantifiers with fresh type variables in a given type
 unquantify :: QType -> TC Type
 {-
 Normally this implementation would be possible:
@@ -117,9 +119,21 @@ inferProgram g [Bind id Nothing [] exp] =
 -- returns the expression, its type and a substitution
 inferExp :: Gamma -> Exp -> TC (Exp, Type, Subst)
 
+-- infers the type of numeric constants
 -- Num n :: Int
 -- subst: empty
-inferExp g (Num n) = return (Num n, Base Int, emptySubst)
+inferExp g e@(Num n) = return (e, Base Int, emptySubst)
+
+-- infers the type of variables
+-- Var x :: tau with foralls replaced with fresh type variables
+-- subst: empty
+inferExp g e@(Var x) =
+  case (E.lookup g x) of
+    Just t ->
+      do
+        t' <- unquantify t -- replaces foralls with fresh type variables
+        return (e, t', emptySubst)
+    _      -> error $ "undefined variable " ++ (show x)
 
 inferExp g e = error $ show e
 inferExp g _ = error "to be implemented"
