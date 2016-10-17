@@ -213,7 +213,7 @@ inferExp g e@(Prim o) =
 
 -- infers the type of function applications
 -- App e1 e2 :: mgu applied to fresh return type
-inferExp g e@(App e1 e2) =
+inferExp g (App e1 e2) =
   do
     (e1', tau1, t)  <- inferExp g e1
     (e2', tau2, t') <- inferExp (substGamma t g)  e2
@@ -223,7 +223,7 @@ inferExp g e@(App e1 e2) =
 
 -- infers the type of if statements
 -- If e e1 e2 :: mgu applied to the else branch
-inferExp g exp@(If e e1 e2) =
+inferExp g (If e e1 e2) =
   do
     (e', tau, t)    <- inferExp g e
     u               <- unify tau (Base Bool)
@@ -233,10 +233,18 @@ inferExp g exp@(If e e1 e2) =
     return (If e' e1' e2', substitute u' tau2, u' <> t2 <> t1 <> u <> t)
 
 -- infers the type of case expressions
--- ::
--- inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) = error ""
--- inferExp g (Case e _) = typeError MalformedAlternatives
--- TODO
+-- Case e x.e1 y.e2 :: mgu applied to tauR
+inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) =
+  do
+    (e', tau, t)    <- inferExp g e
+    alphaL          <- fresh
+    alphaR          <- fresh
+    (e1', tauL, t1) <- inferExp (E.add (substGamma t g) (x, Ty alphaL)) e1
+    (e2', tauR, t2) <- inferExp (E.add (substGamma t1 (substGamma t g)) (y, Ty alphaR)) e2
+    u               <- unify (substitute t2 (substitute t1 (substitute t (Sum alphaL alphaR)))) (substitute t2 (substitute t1 tau))
+    u'              <- unify (substitute u (substitute t2 tauL)) (substitute u tauR)
+    return (Case e' [Alt "Inl" [x] e1', Alt "Inr" [y] e2'], substitute u' (substitute u tauR), u' <> u <> t2 <> t1 <> t)
+inferExp g (Case e _) = typeError MalformedAlternatives
 
 -- infers the type of recursive functions
 -- Letfun (Bind f _ [x] e) :: mgu applied to the arrow type
@@ -247,7 +255,6 @@ inferExp g (Letfun (Bind f _ [x] e)) =
     (e', tau, t) <- inferExp (E.addAll g [(x, Ty alpha1), (f, Ty alpha2)]) e
     u            <- unify (substitute t alpha2) (Arrow (substitute t alpha1) tau)
     return (Letfun (Bind f (Just (Ty (substitute u (Arrow (substitute t alpha1) tau)))) [x] e'), substitute u (Arrow (substitute t alpha1) tau), u <> t)
--- TODO: not working
 
 -- infers the type of let bindings
 -- Let [Bind x _ [] e1] e2 :: type of binding expression
