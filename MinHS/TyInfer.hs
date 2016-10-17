@@ -213,7 +213,14 @@ inferExp g e@(App (App (Prim o) x) y) =
     return (e, t, emptySubst)
 
 -- infers the type of function applications
--- ::
+-- App e1 e2 :: mgu applied to fresh return type
+inferExp g e@(App e1 e2) =
+  do
+    (e1', tau1, t)  <- inferExp g e1
+    (e2', tau2, t') <- inferExp (substGamma t g)  e2
+    alpha           <- fresh -- introduces a fresh return type
+    u               <- unify (substitute t' tau1) (Arrow tau2 alpha)
+    return (e, substitute u alpha, u <> t' <> t)
 
 -- infers the type of if statements
 -- If e e1 e2 :: mgu applied to the else branch
