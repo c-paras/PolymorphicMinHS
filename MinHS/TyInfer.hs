@@ -284,7 +284,7 @@ inferExp g (Let [Bind x _ [] e1] e2) =
   do
     (e1', tau, t)   <- inferExp g e1
     (e2', tau', t') <- inferExp (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) e2
-    return (Let [Bind x (Just (Ty tau)) [] e1'] e2', tau', t' <> t)
+    return (Let [Bind x (Just (generalise g tau)) [] e1'] e2', tau', t' <> t)
 
 -- terminates in error for all other expressions
 inferExp _ e = error $ "runtime error: " ++ (show e)
