@@ -124,28 +124,40 @@ unify (Base a) (Base b) =
 unify (Prod t11 t12) (Prod t21 t22) =
   do
     s  <- unify t11 t21
-    s' <- unify t12 t22
+    s' <- unify (substitute s t12) (substitute s t22)
     return (s <> s')
 
 -- unifies function types
 unify (Arrow t11 t12) (Arrow t21 t22) =
   do
     s  <- unify t11 t21
-    s' <- unify t12 t22
+    s' <- unify (substitute s t12) (substitute s t22)
     return (s <> s')
 
 -- unifies sum types
 unify (Sum t11 t12) (Sum t21 t22) =
   do
     s  <- unify t11 t21
-    s' <- unify t12 t22
+    s' <- unify (substitute s t12) (substitute s t22)
     return (s <> s')
 
 -- unifies a type variable with an arbitrary term
--- TODO
+unify (TypeVar v) t =
+  if not $ occurs v t
+  then return (v =: t)
+  else error $ "type variable occurs in term " ++ (show t)
+
+unify t (TypeVar v) =
+  if not $ occurs v t
+  then return (v =: t)
+  else error $ "type variable occurs in term " ++ (show t)
 
 -- terminates in error for all other combinations
 unify _ _ = error "no unifier"
+
+-- checks whether a type variable occurs in an arbitrary term
+occurs :: Id -> Type -> Bool
+occurs v t = elem (TypeVar v) (t:[])
 
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
