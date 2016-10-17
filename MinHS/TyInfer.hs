@@ -22,22 +22,22 @@ initialGamma = E.empty
 
 -- returns the type of a given primop
 primOpType :: Op -> QType
-primOpType Gt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Ge   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Lt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Le   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Eq   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Ne   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Neg  = Ty $ Base Int `Arrow` Base Int
-primOpType Fst  = Forall "a"
-                $ Forall "b"
-                $ Ty
-                $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "a"
-primOpType Snd  = Forall "a"
-                $ Forall "b"
-                $ Ty
-                $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "b"
-primOpType _    = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Int)
+primOpType Gt  = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Ge  = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Lt  = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Le  = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Eq  = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Ne  = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Neg = Ty $ Base Int `Arrow` Base Int
+primOpType Fst = Forall "a"
+               $ Forall "b"
+               $ Ty
+               $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "a"
+primOpType Snd = Forall "a"
+               $ Forall "b"
+               $ Ty
+               $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "b"
+primOpType _   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Int)
 
 -- returns the type of a constructor
 constType :: Id -> Maybe QType
