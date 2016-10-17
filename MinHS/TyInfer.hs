@@ -253,8 +253,8 @@ inferExp g (If e e1 e2) =
 inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) =
   do
     (e', tau, t)    <- inferExp g e
-    alphaL          <- fresh
     alphaR          <- fresh
+    alphaL          <- fresh
     (e1', tauL, t1) <- inferExp (E.add (substGamma t g) (x, Ty alphaL)) e1
     (e2', tauR, t2) <- inferExp (E.add (substGamma t1 (substGamma t g)) (y, Ty alphaR)) e2
     u               <- unify (substitute t2 (substitute t1 (substitute t (Sum alphaL alphaR)))) (substitute t2 (substitute t1 tau))

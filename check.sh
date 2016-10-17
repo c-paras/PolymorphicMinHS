@@ -7,6 +7,7 @@ if test -n "$1"
 then
 	file="/tmp/foo_$$.mhs"
 	echo "$1" > $file
+	remove=$file
 else
 	file="foo.mhs"
 	if ! test -e $file
@@ -21,4 +22,4 @@ echo
 ./dist/build/minhs-2/minhs-2 --dump parser $file
 echo
 ./dist/build/minhs-2/minhs-2 --dump type-infer $file
-rm -f $file
+rm -f $remove
