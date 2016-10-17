@@ -74,7 +74,7 @@ tv = tv'
 -- returns a list of the type variables in a QType
 tvQ :: QType -> [Id]
 tvQ (Forall x t) = filter (/= x) $ tvQ t
-tvQ (Ty t) = tv t
+tvQ (Ty t)       = tv t
 
 -- returns a list of the type variables in an environment
 tvGamma :: Gamma -> [Id]
@@ -166,46 +166,28 @@ occurs v t = elem v (tv t)
 
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
---generalise g t = Ty t
+-- generalise g t = Ty t
 -- TODO
 
-{-
 generalise g t =
-  if null (tv t)
-  then (Ty t)
-  else if length (tv t) == 2
-       then Forall ((tv t)!!1) (Ty t)
-       else Forall (head (tv t)) (Ty t)
--}
-
-{-
-generalise g t =
-  if length (tv t) == 0
-  then (Ty t)
-  else if length (tv t) == 1
-       then Forall (head (tv t)) (Ty t)
-       else if length (tv t) == 2
-            then Forall (head (tv t)) (Forall ((tv t)!!1) (Ty t))
-            else Forall (head (tv t)) (Ty t)
--}
-
-generalise g t =
-  if null $ (tv t) \\ (tvGamma g)
+  if null $ (tv t) \\ (tvGamma g) -- finds type variables in t, ignoring those in g
   then Ty t
   else
     let
-      (x, xs) = splitAt 1 $ (tv t) \\ (tvGamma g)
-    in generalise' xs $ Forall (head x) (Ty t)
+      typeVars = (tv t) \\ (tvGamma g)
+      (xs, x)  = splitAt (length typeVars - 1) typeVars
+    in generalise' xs $ Forall (head x) (Ty t) -- wraps a forall around QType
 
+-- wraps forall quantifiers around a QType
 generalise' :: [Id] -> QType -> QType
 generalise' typeVars t =
   if null typeVars
-  then t
+  then t -- returns QType when fully-wrapped with foralls
   else
     let
-      (x, xs) = splitAt 1 typeVars
-    in generalise' xs $ Forall (head x) t
-  
+      (xs, x) = splitAt (length typeVars - 1) typeVars
+    in generalise' xs $ Forall (head x) t -- wraps the next forall around QType
+
 -----------------------------------------------------------
 
 -- inferExp infers the type of the expression in the binding
