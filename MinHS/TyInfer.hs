@@ -162,11 +162,51 @@ unify _ _ = error "no unifier"
 occurs :: Id -> Type -> Bool
 occurs v t = elem v (tv t)
 
+-----------------------------------------------------------
+
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
-generalise g t = Ty t
+--generalise g t = Ty t
 -- TODO
---generalise g t = Forall (tv(t) \\ tvGamma(g)) (Ty t)
+
+{-
+generalise g t =
+  if null (tv t)
+  then (Ty t)
+  else if length (tv t) == 2
+       then Forall ((tv t)!!1) (Ty t)
+       else Forall (head (tv t)) (Ty t)
+-}
+
+{-
+generalise g t =
+  if length (tv t) == 0
+  then (Ty t)
+  else if length (tv t) == 1
+       then Forall (head (tv t)) (Ty t)
+       else if length (tv t) == 2
+            then Forall (head (tv t)) (Forall ((tv t)!!1) (Ty t))
+            else Forall (head (tv t)) (Ty t)
+-}
+
+generalise g t =
+  if null $ (tv t) \\ (tvGamma g)
+  then Ty t
+  else
+    let
+      (x, xs) = splitAt 1 $ (tv t) \\ (tvGamma g)
+    in generalise' xs $ Forall (head x) (Ty t)
+
+generalise' :: [Id] -> QType -> QType
+generalise' typeVars t =
+  if null typeVars
+  then t
+  else
+    let
+      (x, xs) = splitAt 1 typeVars
+    in generalise' xs $ Forall (head x) t
+  
+-----------------------------------------------------------
 
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
