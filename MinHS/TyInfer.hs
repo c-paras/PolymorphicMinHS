@@ -15,6 +15,11 @@ import Data.Monoid (Monoid (..), (<>))
 import Data.Foldable (foldMap)
 import Data.List (nub, union, (\\))
 
+type Gamma = E.Env QType
+
+initialGamma :: Gamma
+initialGamma = E.empty
+
 -- returns the type of a given primop
 primOpType :: Op -> QType
 primOpType Gt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
@@ -55,11 +60,6 @@ constType "Inr"   = Just
                   $ Ty
                   $ TypeVar "b" `Arrow` (TypeVar "a" `Sum` TypeVar "b")
 constType _       = Nothing
-
-type Gamma = E.Env QType
-
-initialGamma :: Gamma
-initialGamma = E.empty
 
 -- returns a list of the type variables in a Type
 tv :: Type -> [Id]
@@ -150,6 +150,7 @@ unify (TypeVar v) t =
   then return (v =: t)
   else error $ "type variable occurs in term " ++ (show t)
 
+-- unifies an arbitrary term with a type variable
 unify t (TypeVar v) =
   if not $ occurs v t
   then return (v =: t)
