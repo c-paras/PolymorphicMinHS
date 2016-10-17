@@ -177,7 +177,7 @@ inferExp g e@(Con c) =
 -- Neg x :: Int; empty subst
 inferExp g e@(App (Prim Neg) x) = return (e, Base Int, emptySubst)
 
--- infers the type of primops
+-- infers the type of other primops
 -- Prim o x y :: tau with forall replaced with fresh type variables; empty subst
 inferExp g e@(App (App (Prim o) x) y) =
   do
@@ -197,24 +197,7 @@ inferExp g exp@(If e e1 e2) =
     (e1', tau1, t1) <- inferExp (substGamma u (substGamma t g)) e1
     (e2', tau2, t2) <- inferExp (substGamma t1 (substGamma u (substGamma t g))) e2
     u' <- unify (substitute t2 tau1) tau2
-    -- TODO: return the correct substitution
-    return (exp, substitute u' tau2, emptySubst) ---(substGamma u' (substGamma t2 (substGamma t1 (substGamma u (substGamma t g))))))
-
-{-
-inferExp g exp@(If e e1 e2) =
-  do
-    (e', tau, t)    <- inferExp g e
-    u                = unify tau (Base Bool)
-    g'               = substGamma t g
-    g''              = substGamma u g'
-    (e1', tau1, t1) <- inferExp g'' e1
-    g'''             = substGamma t1 g''
-    (e2', tau2, t2) <- inferExp g''' e2
-    u'               = unify (substitute t2 tau1) tau2
-    g''''            = substGamma t2 g'''
-    g'''''           = substGamma u' g''''
-    return (exp, substitute u' tau2, g''''')
--}
+    return (exp, substitute u' tau2, u' <> t2 <> t1 <> u <> t)
 
 -- infers the type of case expressions
 -- ::
