@@ -235,13 +235,21 @@ inferExp g exp@(If e e1 e2) =
 
 -- infers the type of case expressions
 -- ::
---inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) = error ""
---inferExp g (Case e _) = typeError MalformedAlternatives
+-- inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) = error ""
+-- inferExp g (Case e _) = typeError MalformedAlternatives
 
---infers the type of recursive functions
--- ::
+-- infers the type of recursive functions
+-- Letfun (Bind f _ [x] e) :: mgu applied to the arrow type
+inferExp g exp@(Letfun (Bind f _ [x] e)) =
+  do
+    alpha1       <- fresh
+    alpha2       <- fresh
+    (e', tau, t) <- inferExp (E.addAll g [(x, Ty alpha1), (f, Ty alpha2)]) e
+    u            <- unify (substitute t alpha2) (Arrow (substitute t alpha1) tau)
+    return (exp, substitute u (Arrow (substitute t alpha1) tau), u <> t)
+-- TODO: not working
 
---infers the type of let bindings
+-- infers the type of let bindings
 -- ::
 
 -- terminates in error for all other expressions
