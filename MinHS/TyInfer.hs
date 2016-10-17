@@ -219,7 +219,7 @@ inferExp g e@(App e1 e2) =
     (e2', tau2, t') <- inferExp (substGamma t g)  e2
     alpha           <- fresh -- introduces a fresh return type
     u               <- unify (substitute t' tau1) (Arrow tau2 alpha)
-    return (e, substitute u alpha, u <> t' <> t)
+    return (App e1' e2', substitute u alpha, u <> t' <> t)
 
 -- infers the type of if statements
 -- If e e1 e2 :: mgu applied to the else branch
@@ -230,7 +230,7 @@ inferExp g exp@(If e e1 e2) =
     (e1', tau1, t1) <- inferExp (substGamma u (substGamma t g)) e1
     (e2', tau2, t2) <- inferExp (substGamma t1 (substGamma u (substGamma t g))) e2
     u' <- unify (substitute t2 tau1) tau2
-    return (exp, substitute u' tau2, u' <> t2 <> t1 <> u <> t)
+    return (If e' e1' e2', substitute u' tau2, u' <> t2 <> t1 <> u <> t)
 
 -- infers the type of case expressions
 -- ::
@@ -246,7 +246,7 @@ inferExp g (Letfun (Bind f _ [x] e)) =
     alpha2       <- fresh
     (e', tau, t) <- inferExp (E.addAll g [(x, Ty alpha1), (f, Ty alpha2)]) e
     u            <- unify (substitute t alpha2) (Arrow (substitute t alpha1) tau)
-    return (Letfun (Bind f (Just (Ty (substitute u (Arrow (substitute t alpha1) tau)))) [x] e), substitute u (Arrow (substitute t alpha1) tau), u <> t)
+    return (Letfun (Bind f (Just (Ty (substitute u (Arrow (substitute t alpha1) tau)))) [x] e'), substitute u (Arrow (substitute t alpha1) tau), u <> t)
 -- TODO: not working
 
 -- infers the type of let bindings
@@ -255,7 +255,7 @@ inferExp g (Let [Bind x _ [] e1] e2) =
   do
     (e1', tau, t)   <- inferExp g e1
     (e2', tau', t') <- inferExp (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) e2
-    return (Let [Bind x (Just (Ty tau')) [] e1] e2, tau', t' <> t)
+    return (Let [Bind x (Just (Ty tau')) [] e1'] e2', tau', t' <> t)
 
 -- terminates in error for all other expressions
 inferExp _ e = error $ "runtime error: " ++ (show e)
