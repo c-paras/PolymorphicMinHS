@@ -121,11 +121,26 @@ unify (Base a) (Base b) =
   else error "primitive types differ"
 
 -- unifies product types
--- TODO
+unify (Prod t11 t12) (Prod t21 t22) =
+  do
+    s  <- unify t11 t21
+    s' <- unify t12 t22
+    return (s <> s')
+
 -- unifies function types
--- TODO
+unify (Arrow t11 t12) (Arrow t21 t22) =
+  do
+    s  <- unify t11 t21
+    s' <- unify t12 t22
+    return (s <> s')
+
 -- unifies sum types
--- TODO
+unify (Sum t11 t12) (Sum t21 t22) =
+  do
+    s  <- unify t11 t21
+    s' <- unify t12 t22
+    return (s <> s')
+
 -- unifies a type variable with an arbitrary term
 -- TODO
 
