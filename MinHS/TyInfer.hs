@@ -61,6 +61,7 @@ type Gamma = E.Env QType
 initialGamma :: Gamma
 initialGamma = E.empty
 
+-- returns a list of the type variables in a Type
 tv :: Type -> [Id]
 tv = tv'
   where
@@ -70,10 +71,12 @@ tv = tv'
     tv' (Arrow a b) = tv a `union` tv b
     tv' (Base c   ) = []
 
+-- returns a list of the type variables in a QType
 tvQ :: QType -> [Id]
 tvQ (Forall x t) = filter (/= x) $ tvQ t
 tvQ (Ty t) = tv t
 
+-- returns a list of the type variables in an environment
 tvGamma :: Gamma -> [Id]
 tvGamma = nub . foldMap tvQ
 
@@ -105,7 +108,7 @@ unquantify' i s (Forall x t) =
   do x' <- fresh
      unquantify' (i + 1)
                  ((show i =: x') <> s)
-                 (substQType (x =:TypeVar (show i)) t)
+                 (substQType (x =: TypeVar (show i)) t)
 
 -- computes the most general unifier of two types
 unify :: Type -> Type -> TC Subst
@@ -157,7 +160,7 @@ unify _ _ = error "no unifier"
 
 -- checks whether a type variable occurs in an arbitrary term
 occurs :: Id -> Type -> Bool
-occurs v t = elem (TypeVar v) (t:[])
+occurs v t = elem v (tv t)
 
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
@@ -247,6 +250,7 @@ inferExp g exp@(Letfun (Bind f _ [x] e)) =
     alpha2       <- fresh
     (e', tau, t) <- inferExp (E.addAll g [(x, Ty alpha1), (f, Ty alpha2)]) e
     u            <- unify (substitute t alpha2) (Arrow (substitute t alpha1) tau)
+--    return (exp, TypeVar "c", u <> t)
     return (exp, substitute u (Arrow (substitute t alpha1) tau), u <> t)
 -- TODO: not working
 
