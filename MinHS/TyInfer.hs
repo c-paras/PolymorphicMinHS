@@ -162,13 +162,8 @@ unify _ _ = error "no unifier"
 occurs :: Id -> Type -> Bool
 occurs v t = elem v (tv t)
 
------------------------------------------------------------
-
 -- reintroduces forall quantifiers
 generalise :: Gamma -> Type -> QType
--- generalise g t = Ty t
--- TODO
-
 generalise g t =
   if null $ (tv t) \\ (tvGamma g) -- finds type variables in t, ignoring those in g
   then Ty t
@@ -187,8 +182,6 @@ generalise' typeVars t =
     let
       (xs, x) = splitAt (length typeVars - 1) typeVars
     in generalise' xs $ Forall (head x) t -- wraps the next forall around QType
-
------------------------------------------------------------
 
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
