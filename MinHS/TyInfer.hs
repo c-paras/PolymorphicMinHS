@@ -237,6 +237,7 @@ inferExp g exp@(If e e1 e2) =
 -- ::
 -- inferExp g (Case e [Alt "Inl" [x] e1, Alt "Inr" [y] e2]) = error ""
 -- inferExp g (Case e _) = typeError MalformedAlternatives
+-- TODO
 
 -- infers the type of recursive functions
 -- Letfun (Bind f _ [x] e) :: mgu applied to the arrow type
@@ -250,7 +251,13 @@ inferExp g exp@(Letfun (Bind f _ [x] e)) =
 -- TODO: not working
 
 -- infers the type of let bindings
--- ::
+-- Let [Bind x _ [] e1] e2 :: type of binding expression
+inferExp g e@(Let [Bind x _ [] e1] e2) =
+  do
+    (e1', tau, t)   <- inferExp g e1
+    (e2', tau', t') <- inferExp (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) e2
+    return (e, tau', t' <> t)
+-- TODO: not working
 
 -- terminates in error for all other expressions
 inferExp _ e = error $ "runtime error: " ++ (show e)
