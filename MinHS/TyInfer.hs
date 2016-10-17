@@ -244,23 +244,22 @@ inferExp g exp@(If e e1 e2) =
 
 -- infers the type of recursive functions
 -- Letfun (Bind f _ [x] e) :: mgu applied to the arrow type
-inferExp g exp@(Letfun (Bind f _ [x] e)) =
+inferExp g (Letfun (Bind f temp [x] e)) =
   do
     alpha1       <- fresh
     alpha2       <- fresh
     (e', tau, t) <- inferExp (E.addAll g [(x, Ty alpha1), (f, Ty alpha2)]) e
     u            <- unify (substitute t alpha2) (Arrow (substitute t alpha1) tau)
---    return (exp, TypeVar "c", u <> t)
-    return (exp, substitute u (Arrow (substitute t alpha1) tau), u <> t)
+    return (Letfun (Bind f temp [x] e), substitute u (Arrow (substitute t alpha1) tau), u <> t)
 -- TODO: not working
 
 -- infers the type of let bindings
 -- Let [Bind x _ [] e1] e2 :: type of binding expression
-inferExp g e@(Let [Bind x _ [] e1] e2) =
+inferExp g (Let [Bind x _ [] e1] e2) =
   do
     (e1', tau, t)   <- inferExp g e1
     (e2', tau', t') <- inferExp (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) e2
-    return (e, tau', t' <> t)
+    return (Let [Bind x (Just (Ty tau')) [] e1] e2, tau', t' <> t)
 -- TODO: not working
 
 -- terminates in error for all other expressions
