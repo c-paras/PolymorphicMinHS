@@ -17,13 +17,13 @@ import Data.List (nub, union, (\\))
 
 -- returns the type of a given primop
 primOpType :: Op -> QType
-primOpType Gt   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Ge   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Lt   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Le   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Eq   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Ne   = Ty $ Base Bool --Base Int `Arrow` (Base Int `Arrow` Base Bool)
-primOpType Neg  = Ty $ Base Int  --Base Int `Arrow` Base Int
+primOpType Gt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Ge   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Lt   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Le   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Eq   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Ne   = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Bool)
+primOpType Neg  = Ty $ Base Int `Arrow` Base Int
 primOpType Fst  = Forall "a"
                 $ Forall "b"
                 $ Ty
@@ -32,7 +32,7 @@ primOpType Snd  = Forall "a"
                 $ Forall "b"
                 $ Ty
                 $ (TypeVar "a" `Prod` TypeVar "b") `Arrow` TypeVar "b"
-primOpType _    = Ty $ Base Int  --Base Int `Arrow` (Base Int `Arrow` Base Int)
+primOpType _    = Ty $ Base Int `Arrow` (Base Int `Arrow` Base Int)
 
 -- returns the type of a constructor
 constType :: Id -> Maybe QType
@@ -166,6 +166,7 @@ occurs v t = elem v (tv t)
 generalise :: Gamma -> Type -> QType
 generalise g t = Ty t
 -- TODO
+--generalise g t = Forall (tv(t) \\ tvGamma(g)) (Ty t)
 
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
@@ -203,15 +204,10 @@ inferExp g e@(Con c) =
         return (e, t', emptySubst)
     _ -> error $ "unknown constructor " ++ (show c)
 
--- infers the type of the unary negation operator
--- Neg x :: Int; empty subst
-inferExp g e@(App (Prim Neg) x) = return (e, Base Int, emptySubst)
-
 -- infers the type of other primops
--- Prim o x y :: tau with forall replaced with fresh type variables; empty subst
-inferExp g e@(App (App (Prim o) x) y) =
+-- Prim o :: tau with forall replaced with fresh type variables; empty subst
+inferExp g e@(Prim o) =
   do
--- TODO: fix primOpType if needed
     t <- unquantify $ primOpType o -- replaces foralls with fresh type variables
     return (e, t, emptySubst)
 
@@ -244,13 +240,13 @@ inferExp g exp@(If e e1 e2) =
 
 -- infers the type of recursive functions
 -- Letfun (Bind f _ [x] e) :: mgu applied to the arrow type
-inferExp g (Letfun (Bind f temp [x] e)) =
+inferExp g (Letfun (Bind f _ [x] e)) =
   do
     alpha1       <- fresh
     alpha2       <- fresh
     (e', tau, t) <- inferExp (E.addAll g [(x, Ty alpha1), (f, Ty alpha2)]) e
     u            <- unify (substitute t alpha2) (Arrow (substitute t alpha1) tau)
-    return (Letfun (Bind f temp [x] e), substitute u (Arrow (substitute t alpha1) tau), u <> t)
+    return (Letfun (Bind f (Just (Ty (substitute u (Arrow (substitute t alpha1) tau)))) [x] e), substitute u (Arrow (substitute t alpha1) tau), u <> t)
 -- TODO: not working
 
 -- infers the type of let bindings
@@ -260,7 +256,6 @@ inferExp g (Let [Bind x _ [] e1] e2) =
     (e1', tau, t)   <- inferExp g e1
     (e2', tau', t') <- inferExp (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) e2
     return (Let [Bind x (Just (Ty tau')) [] e1] e2, tau', t' <> t)
--- TODO: not working
 
 -- terminates in error for all other expressions
 inferExp _ e = error $ "runtime error: " ++ (show e)
