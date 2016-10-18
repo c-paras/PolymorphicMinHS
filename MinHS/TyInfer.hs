@@ -187,10 +187,10 @@ generalise' typeVars t =
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
 inferProgram :: Gamma -> Program -> TC (Program, Type, Subst)
-inferProgram g [Bind id Nothing [] exp] =
+inferProgram g [Bind id _ [] exp] =
   do
-    (exp', t, subst) <- inferExp g exp
-    return (([Bind id (Just (generalise g t)) [] (allTypes (substQType subst) exp')]), t, subst)
+    (exp', tau, t) <- inferExp g exp
+    return (([Bind id (Just (generalise g tau)) [] (allTypes (substQType t) exp')]), tau, t)
 
 -- infers the type of an expression under an environment
 -- returns the expression, its type and a substitution
