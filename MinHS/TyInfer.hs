@@ -118,10 +118,10 @@ unify (TypeVar v1) (TypeVar v2) | v1 == v2 = return emptySubst
 unify (TypeVar v1) (TypeVar v2) | v1 /= v2 = return (v2 =: TypeVar v1)
 
 -- unifies primitive types
-unify (Base a) (Base b) =
+unify t1@(Base a) t2@(Base b) =
   if a == b
   then return emptySubst
-  else error "primitive types differ"
+  else typeError $ TypeMismatch t1 t2
 
 -- unifies product types
 unify (Prod t11 t12) (Prod t21 t22) =
@@ -148,13 +148,13 @@ unify (Sum t11 t12) (Sum t21 t22) =
 unify (TypeVar v) t =
   if not $ occurs v t
   then return (v =: t)
-  else error $ "type variable occurs in term " ++ (show t)
+  else typeError $ OccursCheckFailed v t
 
 -- unifies an arbitrary term with a type variable
 unify t (TypeVar v) =
   if not $ occurs v t
   then return (v =: t)
-  else error $ "type variable occurs in term " ++ (show t)
+  else typeError $ OccursCheckFailed v t
 
 -- terminates in error for all other combinations
 unify _ _ = error "no unifier"
@@ -208,7 +208,7 @@ inferExp g e@(Var x) =
       do
         t' <- unquantify t -- replaces foralls with fresh type variables
         return (e, t', emptySubst)
-    _ -> error $ "undefined variable " ++ (show x)
+    _ -> typeError $ NoSuchVariable x
 
 -- infers the type of constructors
 -- Con c :: tau with forall replaced with fresh type variables; empty subst
@@ -218,7 +218,7 @@ inferExp g e@(Con c) =
       do
         t' <- unquantify t -- replaces foralls with fresh type variables
         return (e, t', emptySubst)
-    _ -> error $ "unknown constructor " ++ (show c)
+    _ -> typeError $ NoSuchConstructor c
 
 -- infers the type of other primops
 -- Prim o :: tau with forall replaced with fresh type variables; empty subst
