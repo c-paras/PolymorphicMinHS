@@ -187,10 +187,10 @@ generalise' typeVars t =
 -- inferExp infers the type of the expression in the binding
 -- allTypes runs the resulting substitution on the entire expression
 inferProgram :: Gamma -> Program -> TC (Program, Type, Subst)
-inferProgram g [Bind id _ [] exp] =
+inferProgram g [Bind id _ [] e] =
   do
-    (exp', tau, t) <- inferExp g exp
-    return (([Bind id (Just (generalise g tau)) [] (allTypes (substQType t) exp')]), tau, t)
+    (e', tau, t) <- inferExp g e
+    return (([Bind id (Just (generalise g tau)) [] (allTypes (substQType t) e')]), tau, t)
 
 -- infers the type of an expression under an environment
 -- returns the expression, its type and a substitution
@@ -211,7 +211,7 @@ inferExp g e@(Var x) =
     _ -> typeError $ NoSuchVariable x
 
 -- infers the type of constructors
--- Con c :: tau with forall replaced with fresh type variables; empty subst
+-- Con c :: tau with foralls replaced with fresh type variables; empty subst
 inferExp g e@(Con c) =
   case (constType c) of
     Just t ->
@@ -221,7 +221,7 @@ inferExp g e@(Con c) =
     _ -> typeError $ NoSuchConstructor c
 
 -- infers the type of other primops
--- Prim o :: tau with forall replaced with fresh type variables; empty subst
+-- Prim o :: tau with foralls replaced with fresh type variables; empty subst
 inferExp g e@(Prim o) =
   do
     t <- unquantify $ primOpType o -- replaces foralls with fresh type variables
@@ -232,7 +232,7 @@ inferExp g e@(Prim o) =
 inferExp g (App e1 e2) =
   do
     (e1', tau1, t)  <- inferExp g e1
-    (e2', tau2, t') <- inferExp (substGamma t g)  e2
+    (e2', tau2, t') <- inferExp (substGamma t g) e2
     alpha           <- fresh -- introduces a fresh return type
     u               <- unify (substitute t' tau1) (Arrow tau2 alpha)
     return (App e1' e2', substitute u alpha, u <> t' <> t)
@@ -277,8 +277,9 @@ inferExp g (Letfun (Bind f _ [x] e)) =
 inferExp g (Let [Bind x _ [] e1] e2) =
   do
     (e1', tau, t)   <- inferExp g e1
-    (e2', tau', t') <- inferExp (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) e2
-    return (Let [Bind x (Just (generalise (E.add (substGamma t g) (x, generalise (substGamma t g) tau)) tau)) [] e1'] e2', tau', t' <> t)
+    let g' = (E.add (substGamma t g) (x, generalise (substGamma t g) tau))
+    (e2', tau', t') <- inferExp g' e2
+    return (Let [Bind x (Just (generalise g' tau)) [] e1'] e2', tau', t' <> t)
 
 -- terminates in error for all other expressions
 inferExp _ e = error $ "runtime error: " ++ (show e)
